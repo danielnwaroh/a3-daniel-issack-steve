@@ -5,6 +5,7 @@
 .section    .text
 
 .global main
+.global	getGpioPtr
 
 main:
 		ldr		r0,	=names
@@ -16,7 +17,10 @@ stop:	b		stop
 request:
 		ldr		r0,	=pressButton
 		bl		printf
-
+		
+		bl		getGpioPtr
+		ldr		r0,	=label
+		str		r0,	[r0]
 
 
 
