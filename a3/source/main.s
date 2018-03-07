@@ -33,8 +33,25 @@ request:
 		@mov		r0,	#12
 		@bl		delayMicroseconds
 
+@GPIO pin 11
+@PIN 23
 initCLK:
 		@initializing SNES - CLOCK line, setting GPIO pin11(CLK) to output
+		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
+		ldr		r1, [r0]
+		mov		r2,	#7					@(b0111)
+		lsl		r2,	#3					@index of 1st bit for pin 11
+		@r2 = 0 111 000
+		bic		r1,	r2					@clear pin11 bits
+		mov		r3,	#1					@output function code
+		lsl		r3,	#3					@r3=0 001 000
+		orr 	r1,	r3					@set pin11 function in r1
+		str 	r1,	[r0]				@write back to GPFSEL1
+
+@GPIO pin 9
+@PIN 21
+initLAT:
+		@initializing SNES - LATCH line, setting GPIO pin9(LAT) to output
 		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
 		ldr		r1, [r0]
 		mov		r2,	#7
@@ -45,7 +62,25 @@ initCLK:
 		orr 	r1,	r3
 		str 	r1,	[r0]
 
-initLAT:
+@GPIO pin 10
+@PIN 19
+initDAT:
+		@initializing SNES - DATA line, setting GPIO pin10(DAT) to input
+		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
+		ldr		r1, [r0]
+		mov		r2,	#6					@(b0110)
+		lsl		r2,	#3					@
+		bic		r1,	r2					@
+		mov		r3,	#1
+		lsl		r3,	#3
+		orr 	r1,	r3
+		str 	r1,	[r0]
+		
+@We need GPIO 9, 10, 11
+@GPIO9: LATCH
+@GPIO10: DATA
+@GPIO11: CLOCK		
+initGPIO:
 		
 		
 
