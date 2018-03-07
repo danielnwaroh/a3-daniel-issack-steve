@@ -5,7 +5,7 @@
 .section    .text
 
 .global main
-.global	getGpioPtr
+@.global	getGpioPtr
 
 main:
 		ldr		r0,	=names
@@ -17,11 +17,45 @@ stop:	b		stop
 request:
 		ldr		r0,	=pressButton
 		bl		printf
-		
-		bl		getGpioPtr
-		ldr		r0,	=label
-		str		r0,	[r0]
 
+		@bl		getGpioPtr
+		@ldr		r0,	=label
+		@str		r0,	[r0]
+
+		mov		r0,	#1
+		bl		Write_Clock			@write 1 to CLK
+
+		mov		r0,	#1
+		bl		Write_Latch			@write 1 to LAT
+
+		mov		r0,	#12
+		bl		delayMicroseconds
+
+initCLK:
+		@initializing SNES - CLOCK line, setting GPIO pin11(CLK) to output
+		ldr		r0,	=0x3F2000004
+		ldr		r1,	[r0]
+		mov		r2,	#7
+		lsl		r2,	#3
+		bic		r1,	r2
+		mov		r3,	#1
+		lsl		r3,	#3
+		orr 	r1,	r3
+		str 	r1,	[r0]
+
+@I dont think im doing the LAT right 
+initLAT:
+		ldr		r0,	=0x3F2000000
+		ldr		r1,	[r0]
+		mov		r2,	#7
+		lsl		r2,	#3
+		bic		r1,	r2
+		mov		r3,	#1
+		lsl		r3,	#3
+		orr 	r1,	r3
+		str 	r1,	[r0]
+
+initDAT:
 
 
 
@@ -48,19 +82,19 @@ printUp:
 		bl		printf
 
 		b		request
-		
+
 printDown:
 		ldr		r0,	=butDown
 		bl		printf
 
 		b		request
-		
+
 printLeft:
 		ldr		r0,	=butLeft
 		bl		printf
 
 		b		request
-		
+
 printRight:
 		ldr		r0,	=butRight
 		bl		printf
@@ -72,29 +106,29 @@ printA:
 		bl		printf
 
 		b		request
-		
+
 printX:
 		ldr		r0,	=butX
 		bl		printf
 
 		b		request
-		
+
 printLb:
 		ldr		r0,	=butLb
 		bl		printf
 
 		b		request
-		
+
 printRb:
 		ldr		r0,	=butRb
 		bl		printf
 
 		b		request
-		
+
 printEnd:
 		ldr		r0,	=end
 		bl		printf
-		
+
 		b		stop
 
 @ Data section
