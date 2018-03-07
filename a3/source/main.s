@@ -5,9 +5,9 @@
 .section    .text
 
 .global main
-@.global	getGpioPtr
 
 main:
+	
 		ldr		r0,	=names
 		bl		printf
 		b		request
@@ -17,24 +17,26 @@ stop:	b		stop
 request:
 		ldr		r0,	=pressButton
 		bl		printf
+		
+		mov		r3,	#0					@register sampling buttons
 
-		@bl		getGpioPtr
-		@ldr		r0,	=label
-		@str		r0,	[r0]
+		bl		getGpioPtr
+		ldr		r1,	=gpioBaseAddress
+		str		r0,	[r1]
 
-		mov		r0,	#1
-		bl		Write_Clock			@write 1 to CLK
+		@mov		r0,	#1
+		@bl		Write_Clock				@write 1 to CLK
 
-		mov		r0,	#1
-		bl		Write_Latch			@write 1 to LAT
+		@mov		r0,	#1
+		@bl		Write_Latch				@write 1 to LAT
 
-		mov		r0,	#12
-		bl		delayMicroseconds
+		@mov		r0,	#12
+		@bl		delayMicroseconds
 
 initCLK:
 		@initializing SNES - CLOCK line, setting GPIO pin11(CLK) to output
-		ldr		r0,	=0x3F2000004
-		ldr		r1,	[r0]
+		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
+		ldr		r1, [r0]
 		mov		r2,	#7
 		lsl		r2,	#3
 		bic		r1,	r2
@@ -43,27 +45,15 @@ initCLK:
 		orr 	r1,	r3
 		str 	r1,	[r0]
 
-@I dont think im doing the LAT right 
 initLAT:
-		ldr		r0,	=0x3F2000000
-		ldr		r1,	[r0]
-		mov		r2,	#7
-		lsl		r2,	#3
-		bic		r1,	r2
-		mov		r3,	#1
-		lsl		r3,	#3
-		orr 	r1,	r3
-		str 	r1,	[r0]
-
-initDAT:
-
-
+		
+		
 
 printB:
 		ldr		r0,	=butB
 		bl		printf
 
-		b			request
+		b		request
 
 printY:
 		ldr		r0,	=butY
@@ -168,3 +158,7 @@ butRb:
 
 end:
 .asciz 	"Program is terminating...\n"
+
+.global gpioBaseAddress
+gpioBaseAddress:
+.int	0
