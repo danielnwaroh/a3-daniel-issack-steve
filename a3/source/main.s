@@ -48,15 +48,6 @@ request:
 		mov		r3,	#0b001
 		bl		InitGPIO
 		
-		@to read GPFSEL0
-		@ldr	r4,	[r0]		
-		
-		@to write GPFSEL0
-		@str	r4,	[r0]
-		
-		@ldr	r0,	=label
-		@str		r0,	[r0]
-		
 		
 @the subroutine initializes a GPIO line, 
 @the line number and function code must be passed
@@ -95,6 +86,15 @@ lineTen:
 lineElvn:
 		ldr		r0,	=label
 		ldr		r1,	[r0, #4]
+		
+		mov		r2,	#7
+		lsl		r2,	#3
+		
+		bic		r1,	r2
+		mov		r3,	#3
+		 
+		orr		r1,	r3
+		str		r1,	[r0]
 		
 		
 		pop		{fp, pc}
