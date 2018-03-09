@@ -1,16 +1,30 @@
 @ CPSC 359 L01 Assignment 3
 @ Daniel Nwaroh & Issack John & Steve Khanna
 
+@ASSIGNMENT CHECK LIST[]
+
+@Display creator names & messages	  []
+@Correctly reading/printing buttons   []
+@Following APCS						  []
+@using subroutines					  []
+@Loop back (not "START")			  []
+@Well documented code			 	  []
+
+
+
+
+
+
 @ Code section
 .section    .text
 
 .global main
+.global	getGpioPtr
 
 main:
-	
 		ldr		r0,	=names
 		bl		printf
-		b		request
+		@b		request
 
 stop:	b		stop
 
@@ -18,71 +32,89 @@ request:
 		ldr		r0,	=pressButton
 		bl		printf
 		
-		mov		r3,	#0					@register sampling buttons
-
 		bl		getGpioPtr
-		ldr		r1,	=gpioBaseAddress
-		str		r0,	[r1]
-
-		@mov		r0,	#1
-		@bl		Write_Clock				@write 1 to CLK
-
-		@mov		r0,	#1
-		@bl		Write_Latch				@write 1 to LAT
-
-		@mov		r0,	#12
-		@bl		delayMicroseconds
-
-@GPIO pin 11
-@PIN 23
-initCLK:
-		@initializing SNES - CLOCK line, setting GPIO pin11(CLK) to output
-		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
-		ldr		r1, [r0]
-		mov		r2,	#7					@(b0111)
-		lsl		r2,	#3					@index of 1st bit for pin 11
-		@r2 = 0 111 000
-		bic		r1,	r2					@clear pin11 bits
-		mov		r3,	#1					@output function code
-		lsl		r3,	#3					@r3=0 001 000
-		orr 	r1,	r3					@set pin11 function in r1
-		str 	r1,	[r0]				@write back to GPFSEL1
-
-@GPIO pin 9
-@PIN 21
-initLAT:
-		@initializing SNES - LATCH line, setting GPIO pin9(LAT) to output
-		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
-		ldr		r1, [r0]
+		ldr		r0,	=label				@Base address
+		str		r0,	[r0]
+		
+		mov		r0,	#9
+		mov		r3,	#0b001
+		bl		InitGPIO
+		
+		mov		r0,	#10
+		mov		r3,	#0b00
+		bl		InitGPIO
+		
+		mov		r0,	#11
+		mov		r3,	#0b001
+		bl		InitGPIO
+		
+		@to read GPFSEL0
+		@ldr	r4,	[r0]		
+		
+		@to write GPFSEL0
+		@str	r4,	[r0]
+		
+		@ldr	r0,	=label
+		@str		r0,	[r0]
+		
+		
+@the subroutine initializes a GPIO line, 
+@the line number and function code must be passed
+@as parameters. The subroutine needs to be general	
+Init_GPIO: 
+		push 	{ fp, lr}
+		mov		fp,	sp
+		
+		cmp		r0,	#9
+		beq		lineNine
+		
+		cmp		r0,	#10
+		beq		lineTen
+		
+		b		lineElvn
+		
+lineNine:
+		ldr		r0,	=label
+		ldr		r1,	[r0]
+		
 		mov		r2,	#7
-		lsl		r2,	#3
+		lsl		r2,	#9
+		
 		bic		r1,	r2
 		mov		r3,	#1
-		lsl		r3,	#3
-		orr 	r1,	r3
-		str 	r1,	[r0]
+		
+		lsl		r3,	#9
+		orr		r1,	r3
+		
+		str		r1,	[r0]
 
-@GPIO pin 10
-@PIN 19
-initDAT:
-		@initializing SNES - DATA line, setting GPIO pin10(DAT) to input
-		ldr		r0, =gpioBaseAddress	@save GPIO addy to a local variable
-		ldr		r1, [r0]
-		mov		r2,	#6					@(b0110)
-		lsl		r2,	#3					@
-		bic		r1,	r2					@
-		mov		r3,	#1
-		lsl		r3,	#3
-		orr 	r1,	r3
-		str 	r1,	[r0]
+lineTen:
+		ldr		r0,	=label
+		ldr		r1,	[r0, #4]
 		
-@We need GPIO 9, 10, 11
-@GPIO9: LATCH
-@GPIO10: DATA
-@GPIO11: CLOCK		
-initGPIO:
+lineElvn:
+		ldr		r0,	=label
+		ldr		r1,	[r0, #4]
 		
 		
+		pop		{fp, pc}
+		mov		pc, lr
+
+@Write a bit to the SNES latch line
+Write_Latch:
+
+
+
+@writes a bit to the SNES clock line
+Write_Clock:
+
+
+@reads a bit from the SNES data line
+Read_data:
+
+@main SNES subroutine that reads input(buttons pressed) from a SNES controller. Returns the code of a pressed button in a register
+Read_SNES:
+
 
 printB:
 		ldr		r0,	=butB
@@ -107,19 +139,19 @@ printUp:
 		bl		printf
 
 		b		request
-
+		
 printDown:
 		ldr		r0,	=butDown
 		bl		printf
 
 		b		request
-
+		
 printLeft:
 		ldr		r0,	=butLeft
 		bl		printf
 
 		b		request
-
+		
 printRight:
 		ldr		r0,	=butRight
 		bl		printf
@@ -131,36 +163,40 @@ printA:
 		bl		printf
 
 		b		request
-
+		
 printX:
 		ldr		r0,	=butX
 		bl		printf
 
 		b		request
-
+		
 printLb:
 		ldr		r0,	=butLb
 		bl		printf
 
 		b		request
-
+		
 printRb:
 		ldr		r0,	=butRb
 		bl		printf
 
 		b		request
-
+		
 printEnd:
 		ldr		r0,	=end
 		bl		printf
-
+		
 		b		stop
 
 @ Data section
 .section    .data
 
+label:
+.rept	64
+.word	
+
 names:
-.asciz	"Creatd by: Daniel Nwaroh, Issack John and Steve Khanna\n"
+.asciz	"Created by: Daniel Nwaroh, Issack John and Steve Khanna\n"
 
 hello:
 .asciz	"Hello World!\n"
@@ -193,7 +229,3 @@ butRb:
 
 end:
 .asciz 	"Program is terminating...\n"
-
-.global gpioBaseAddress
-gpioBaseAddress:
-.int	0
