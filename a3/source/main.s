@@ -24,17 +24,25 @@
 main:
 		ldr		r0,	=names
 		bl		printf
-		@b		request
+		
+		bl		request
+		
+		bl		Read_SNES
+		
+		
 
 stop:	b		stop
 
 request:
+		push	{fp, lr}
+		mov		fp,	sp
+		
 		ldr		r0,	=pressButton
 		bl		printf
 
 		bl		getGpioPtr
-		ldr		r0,	=label				@Base address
-		str		r0,	[r0]
+		ldr		r1,	=label				@Base address
+		str		r0,	[r1]
 
 		mov		r0,	#9
 		mov		r3,	#0b001
@@ -47,12 +55,15 @@ request:
 		mov		r0,	#11
 		mov		r3,	#0b001
 		bl		InitGPIO
+		
+		pop		{fp, pc}
+		mov		pc,	lr
 
 
 @the subroutine initializes a GPIO line,
 @the line number and function code must be passed
 @as parameters. The subroutine needs to be general
-Init_GPIO:
+InitGPIO:
 		push 	{ fp, lr}
 		mov		fp,	sp
 
@@ -79,9 +90,13 @@ lineNine:
 		orr		r1,	r3
 
 		str		r1,	[r0]
+		
+		b		ExitInitGPIO
+
 @DATA - input
 lineTen:
 		ldr		r0,	=label
+		ldr		r0,	[r0]
 		ldr		r1,	[r0, #4]
 
 		mov		r2,	#6
@@ -93,10 +108,13 @@ lineTen:
 		orr 	r1,	r3
 
 		str 	r1,	[r0]
+		
+		b		ExitInitGPIO
 
 @CLOCK - output
 lineElvn:
 		ldr		r0,	=label
+		ldr		r0,	[r0]
 		ldr		r1,	[r0, #4]
 
 		mov		r2,	#7
@@ -108,30 +126,46 @@ lineElvn:
 		orr		r1,	r3
 		str		r1,	[r0]
 
-
+ExitInitGPIO:
 		pop		{fp, pc}
 		mov		pc, lr
+		
 
 @Write a bit to the SNES latch line
 Write_Latch:
+		push 	{fp, lr}
+		mov		fp,	sp
+		
 		ldr		r2,	=label
 		mov		r3,	#1
 		lsl		r3,	#9												@ align bit for pin#9
 		teq		r1,	#0
 		streq	r3,	[r2, #40]									@ GPCLR0
 		strne	r3,	[r2, #28]									@ GPSET0
+		
+		pop		{fp, pc}
+		mov		pc, lr
 
 @writes a bit to the SNES clock line
 Write_Clock:
+		push 	{fp, lr}
+		mov		fp,	sp
+
 		ldr		r2,	=label
 		mov 	r3,	#1
 		lsl		r3,	#11												@ align bit for pin#11
 		teq 	r1,	#0
 		streq	r3, [r2, #40]									@ GPCLR0
 		strne	r3,	[r2, #28]									@ GPSET0
+		
+		pop		{fp, pc}
+		mov		pc, lr
 
 @reads a bit from the SNES data line
 Read_Data:
+		push 	{fp, lr}
+		mov		fp,	sp
+
 		ldr		r2,	=label
 		ldr		r1,	[r2, #52]									@ GPLEV 0
 		mov		r3,	#1
@@ -140,10 +174,52 @@ Read_Data:
 		teq		r1,	#0
 		moveq	r4,	#0												@ return 0
 		movne	r4,	#1												@ return 1
+		
+		pop		{fp, pc}
+		mov		pc, lr
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 @main SNES subroutine that reads input(buttons pressed) from a SNES controller. Returns the code of a pressed button in a register
 Read_SNES:
+		push 	{fp, lr}
+		mov		fp,	sp
 
+		mov		r6,	#0
+		mov		r0,	#1
+		bl		Write_Clock
+		mov		r0,	#1
+		bl		Write_Latch
+		mov		r0,	#12
+		bl		delayMicroseconds
+		mov		r0,	#0
+		bl		Write_Latch
+		mov		r5,	#0										@r5 = i
+
+pulseLoop:
+		mov		r0,	#6
+		bl		delayMicroseconds
+		mov		r0,	#0
+		bl		Write_Clock
+		mov		r0,	#6
+		bl		delayMicroseconds
+		bl		Read_Data
+		cmp		r0,	#1												@ Checks to see if bit is 1 or 0
+		bne		checkBit											
+		mov		r2,	#1												@ This occurs if no button has been pressed
+		lsl		r2,	r5												@ Shift to the correct index, (r5 is i)
+		orr		r6,	r2												@ Add 1 one to index to show that is hasnt been pressed yet
+
+checkBit:
+		mov		r0,	#1
+		bl		Write_Clock
+		add		r5,	r5,	#1
+		cmp		r5,	#16
+		blt		pulseLoop
+		mov		r0,	r6
+		
+		pop		{fp, pc}
+		mov		pc, lr
 
 printB:
 		ldr		r0,	=butB
@@ -223,6 +299,7 @@ printEnd:
 label:
 .rept	64
 .word
+.endr
 
 names:
 .asciz	"Created by: Daniel Nwaroh, Issack John and Steve Khanna\n"
@@ -258,3 +335,6 @@ butRb:
 
 end:
 .asciz 	"Program is terminating...\n"
+
+
+
