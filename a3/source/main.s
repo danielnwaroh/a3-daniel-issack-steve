@@ -24,31 +24,131 @@
 main:
 		ldr		r0,	=names
 		bl		printf
-		mov		r8, #0
+		mov		r10, #0
 		
 reLoop:	bl		request
+		//b		ReadButtons
+
+
+ReadButtons:
+		bl		Read_SNES
+		//mov		r10, #0
+		mov		r9,	r0
+		ldr		r0,	=test2
+		mov		r1,	r9
+		bl		printf
+		mov		r0, r9
+		cmp		r0, r10
+		beq		SameState
+		mov		r10, r0
+		
+		mov		r6, r0
+		mov		r4, #0
+		mov		r5, #1
+		mvn		r5, r5
+
+CheckPressedButtons:
+		bic		r7, r6, r5
+		cmp		r7, #0
+		beq		ButtonPressed
+		lsr		r6, #1
+		add		r4, #1
+		cmp		r4, #11
+		ble		CheckPressedButtons
+		b		ReadButtons
+
+ButtonPressed:
+		
+
+		ldr		r0,	=test2
+		@mov		r1,	r6
+		bl		printf
+		b		reLoop
+		
+SameState:
+		add		r3, #24
+		mov		r0, r3
+		bl		delayMicroseconds
+		@bl		Wait
+		b		ReadButtons
+		
+/*
+looop:	
+		mov		r0,	#60000
+		bl		Wait
+		@bl		delayMicroseconds
 		
 		bl		Read_SNES
 		
-		mov		r7,	r0
+		@mov		r7,	r0
 		
 		ldr		r0,	=test
 		mov		r1,	r7
 		bl		printf
 		
-		add		r8, r8, #1
-		cmp		r8, #2
-		ble		reLoop
-		@b	reLoop
+		ldr		r1,	=0xFFFF
+		teq		r0,	r1
+		beq		looop
 		
+		ldr		r1,	=0xFFFF
+		teq		r0,	r1
+		beq		printB
+		
+		ldr		r1,	=0xBFFF
+		teq		r0,	r1
+		beq		printY
+		
+		ldr		r1,	=0xDEFF
+		teq		r0,	r1
+		beq		printSelect
+		
+		ldr		r1,	=0xEFFF
+		teq		r0,	r1
+		beq		printEnd
+		
+		ldr		r1,	=0xF7FF
+		teq		r0,	r1
+		beq		printUp
+		
+		ldr		r1,	=0xFBFF
+		teq		r0,	r1
+		beq		printDown
+		
+		ldr		r1,	=0xFDFF
+		teq		r0,	r1
+		beq		printLeft
+		
+		ldr		r1,	=0xFEFF
+		teq		r0,	r1
+		beq		printRight
+		
+		ldr		r1,	=0xFF7F
+		teq		r0,	r1
+		beq		printA
+		
+		ldr		r1,	=0xFFBF
+		teq		r0,	r1
+		beq		printX
+		
+		ldr		r1,	=0xFFDF
+		teq		r0,	r1
+		beq		printLb
+		
+		ldr		r1,	=0xFFEF
+		teq		r0,	r1
+		beq		printRb
+		
+		b		looop
+		
+*/		
 		
 
 stop:	b		stop
 
 request:
-		push	{fp, lr}
+		push 	{ fp, lr}
 		mov		fp,	sp
-		
+
 		ldr		r0,	=pressButton
 		bl		printf
 
@@ -69,7 +169,7 @@ request:
 		bl		InitGPIO
 		
 		pop		{fp, pc}
-		mov		pc,	lr
+		mov		pc, lr
 
 
 @the subroutine initializes a GPIO line,
@@ -93,12 +193,12 @@ lineNine:
 		ldr		r1,	[r0]
 
 		mov		r2,	#7
-		lsl		r2,	#9
+		lsl		r2,	#27
 
 		bic		r1,	r2
 		mov		r3,	#1
 
-		lsl		r3,	#9
+		lsl		r3,	#27
 		orr		r1,	r3
 
 		str		r1,	[r0]
@@ -108,11 +208,11 @@ lineNine:
 @DATA - input
 lineTen:
 		ldr		r0,	=label
-		ldr		r0,	[r0]
-		ldr		r1,	[r0, #4]
+		@ldr		r0,	[r0]
+		ldr		r1,	[r0, #0x4]
 
-		mov		r2,	#6
-		lsl		r2,	#3
+		mov		r2,	#7
+		@lsl		r2,	#3
 
 		bic		r1,	r2
 		mov		r3,	#0
@@ -126,17 +226,21 @@ lineTen:
 @CLOCK - output
 lineElvn:
 		ldr		r0,	=label
-		ldr		r0,	[r0]
+		@ldr		r0,	[r0]
 		ldr		r1,	[r0, #4]
 
 		mov		r2,	#7
 		lsl		r2,	#3
 
 		bic		r1,	r2
-		mov		r3,	#3
+		mov		r3,	#1
+		
+		lsl		r3,	#3
 
 		orr		r1,	r3
 		str		r1,	[r0]
+		
+		
 
 ExitInitGPIO:
 		pop		{fp, pc}
@@ -148,9 +252,13 @@ Write_Latch:
 		push 	{fp, lr}
 		mov		fp,	sp
 		
+		mov		r1,	r0
+		mov		r0,	#9
+		
 		ldr		r2,	=label
+		
 		mov		r3,	#1
-		lsl		r3,	#9												@ align bit for pin#9
+		lsl		r3,	r0												@ align bit for pin#9
 		teq		r1,	#0
 		streq	r3,	[r2, #40]									@ GPCLR0
 		strne	r3,	[r2, #28]									@ GPSET0
@@ -162,10 +270,14 @@ Write_Latch:
 Write_Clock:
 		push 	{fp, lr}
 		mov		fp,	sp
+		
+		mov		r1,	r0
+		mov		r0, #11
 
 		ldr		r2,	=label
+		
 		mov 	r3,	#1
-		lsl		r3,	#11												@ align bit for pin#11
+		lsl		r3,	r0											@ align bit for pin#11
 		teq 	r1,	#0
 		streq	r3, [r2, #40]									@ GPCLR0
 		strne	r3,	[r2, #28]									@ GPSET0
@@ -177,15 +289,17 @@ Write_Clock:
 Read_Data:
 		push 	{fp, lr}
 		mov		fp,	sp
-
-		ldr		r2,	=label
-		ldr		r1,	[r2, #52]									@ GPLEV 0
+		
+		mov		r0,	#10
+		
+		ldr		r1,	=label
+		ldr		r2,	[r1, #52]									@ GPLEV 0
 		mov		r3,	#1
-		lsl		r3,	#10												@ align bit for pin#10
-		and		r1,	r3												@ mask everything else
-		teq		r1,	#0
-		moveq	r4,	#0												@ return 0
-		movne	r4,	#1												@ return 1
+		lsl		r3,	r0												@ align bit for pin#10
+		and		r2,	r3												@ mask everything else
+		teq		r2,	#0
+		moveq	r0,	#0												@ return 0
+		movne	r0,	#1												@ return 1
 		
 		pop		{fp, pc}
 		mov		pc, lr
@@ -194,8 +308,9 @@ Read_Data:
 
 @main SNES subroutine that reads input(buttons pressed) from a SNES controller. Returns the code of a pressed button in a register
 Read_SNES:
-		push 	{fp, lr}
+		push 	{r4, r5, r6, fp, lr}
 		mov		fp,	sp
+		sub		sp, #12
 
 		mov		r6,	#0
 		mov		r0,	#1
@@ -203,17 +318,20 @@ Read_SNES:
 		mov		r0,	#1
 		bl		Write_Latch
 		mov		r0,	#12
+		@bl		Wait
 		bl		delayMicroseconds
 		mov		r0,	#0
 		bl		Write_Latch
 		mov		r5,	#0										@r5 = i
 
-pulseLoop:
-		mov		r0,	#6
+pulseLoop:	
+		add		r0,	#6
+		@bl		Wait
 		bl		delayMicroseconds
 		mov		r0,	#0
 		bl		Write_Clock
 		mov		r0,	#6
+		@bl		Wait
 		bl		delayMicroseconds
 		bl		Read_Data
 		cmp		r0,	#1												@ Checks to see if bit is 1 or 0
@@ -228,11 +346,33 @@ checkBit:
 		add		r5,	r5,	#1
 		cmp		r5,	#16
 		blt		pulseLoop
+		mov		r1,	r6
+		
+		ldr		r0,	=test1
+		@mov		r1,	r6
+		bl		printf
+		
 		mov		r0,	r6
 		
+		add		sp, #12
+		pop		{r4, r5, r6, fp, pc}
+		@mov		pc, lr
+		bx		lr
+		
+/*
+Wait:
+		push	{fp, lr}
+		ldr		r0,	=label
+		ldr		r1,	[r0, #4]
+		add		r1,	r3
+		
+WaitLoop:
+		ldr		r2,	[r0]
+		cmp		r1,	r2
+		bhi		WaitLoop
 		pop		{fp, pc}
-		mov		pc, lr
-
+		mov		pc,	lr
+*/		
 printB:
 		ldr		r0,	=butB
 		bl		printf
@@ -344,8 +484,10 @@ butLb:
 .asciz	"You have pressed LEFT\n"
 butRb:
 .asciz	"You have pressed RIGHT\n"
-test:
-.asciz	"r0: %d\n"
+test1:
+.asciz	"Test 1 r0: %d\n"
+test2:
+.asciz	"Test 2 r0: %d\n"
 
 end:
 .asciz 	"Program is terminating...\n"
