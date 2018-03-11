@@ -24,10 +24,22 @@
 main:
 		ldr		r0,	=names
 		bl		printf
+		mov		r8, #0
 		
-		bl		request
+reLoop:	bl		request
 		
 		bl		Read_SNES
+		
+		mov		r7,	r0
+		
+		ldr		r0,	=test
+		mov		r1,	r7
+		bl		printf
+		
+		add		r8, r8, #1
+		cmp		r8, #2
+		ble		reLoop
+		@b	reLoop
 		
 		
 
@@ -45,15 +57,15 @@ request:
 		str		r0,	[r1]
 
 		mov		r0,	#9
-		mov		r3,	#0b001
+		mov		r3,	#1
 		bl		InitGPIO
 
 		mov		r0,	#10
-		mov		r3,	#0b00
+		mov		r3,	#0
 		bl		InitGPIO
 
 		mov		r0,	#11
-		mov		r3,	#0b001
+		mov		r3,	#1
 		bl		InitGPIO
 		
 		pop		{fp, pc}
@@ -332,6 +344,8 @@ butLb:
 .asciz	"You have pressed LEFT\n"
 butRb:
 .asciz	"You have pressed RIGHT\n"
+test:
+.asciz	"r0: %d\n"
 
 end:
 .asciz 	"Program is terminating...\n"
