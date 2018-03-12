@@ -1,5 +1,8 @@
 @ CPSC 359 L01 Assignment 3
 @ Daniel Nwaroh & Issack John & Steve Khanna
+@ Daniel Nwaroh: 30017476
+@ Steve Khanna: 10153930
+@ Issack John: 30031053
 
 @ Code section
 .section    .text
@@ -8,24 +11,24 @@
 .global	getGpioPtr
 
 main:
-		ldr		r0,	=names						@Load creator names
-		bl		printf							@Print Creator names
-		mov		r10,	#0xffff					@Checker reg: meaning nothing is being pushed
+		ldr		r0,	=names										@Load creator names
+		bl		printf											@Print Creator names
+		mov		r10,	#0xffff									@Checker reg: meaning nothing is being pushed
 		
-		bl		getGpioPtr						@getting GPIO address	
-		ldr		r1,	=gpioBaseAddress			@Base address
+		bl		getGpioPtr										@getting GPIO address	
+		ldr		r1,	=gpioBaseAddress							@Base address
 		str		r0,	[r1]						
 		
-		mov		r0,	#9							@GPIO pin 9 (Latch) passed as a param
-		mov		r1,	#1							@Function code for output
+		mov		r0,	#9											@GPIO pin 9 (Latch) passed as a param
+		mov		r1,	#1											@Function code for output
 		bl		InitGPIO
 
-		mov		r0,	#10							@GPIO pin 10 (Data) passed as a param
-		mov		r1,	#0							@Function code for input
+		mov		r0,	#10											@GPIO pin 10 (Data) passed as a param
+		mov		r1,	#0											@Function code for input
 		bl		InitGPIO
 
-		mov		r0,	#11							@GPIO pin 11 (Clock) passed as a param
-		mov		r1,	#1							@Function code for output
+		mov		r0,	#11											@GPIO pin 11 (Clock) passed as a param
+		mov		r1,	#1											@Function code for output
 		bl		InitGPIO
 
 @User prompt to press a button
@@ -35,17 +38,17 @@ request:
 
 @Program doesnt print anything till button is pressed
 delay:	
-		bl		Read_SNES					@Calls the function
-		mov		r7,	r0						@Copy of returned val from func
-		mov		r0,	#60000					@Delays 60000 us
+		bl		Read_SNES										@Calls the function
+		mov		r7,	r0											@Copy of returned val from func
+		mov		r0,	#60000										@Delays 60000 us
 		bl		delayMicroseconds		
 		bl		Read_SNES
-		cmp		r7, r0						@Checks if two buttons are pressed simulataneously
+		cmp		r7, r0											@Checks if two buttons are pressed simulataneously
 		beq		delay						
-		cmp		r0, r10						@Makes sure a button was pressed
+		cmp		r0, r10											@Makes sure a button was pressed
 		beq		delay						
-		bl		checkMsg					@If button was pressed, checks which one 
-		b		request						@Loops back for a new prompt
+		bl		checkMsg										@If button was pressed, checks which one 
+		b		request											@Loops back for a new prompt
 @Checks which button was pressed		
 checkMsg:
 		push	{r6, lr}
@@ -109,8 +112,8 @@ stop:	b		stop
 @as parameters. The subroutine needs to be general
 InitGPIO:
 		push 	{r4, r5, r7, r8}
-		mov		r4,	r0								@r4: 1st arg
-		mov		r5,	r1								@r5: 2nd arg, function code 1 or 0
+		mov		r4,	r0											@r4: 1st arg
+		mov		r5,	r1											@r5: 2nd arg, function code 1 or 0
 		ldr		r0,	=gpioBaseAddress
 		ldr		r0,[r0]
 		cmp		r4,	#9
@@ -121,15 +124,15 @@ InitGPIO:
 LineEleven:
 		ldr		r0, =gpioBaseAddress
 		ldr		r0, [r0]
-		add		r0, r0, #4				@Original address incremented by 4
-		ldr		r1, [r0]				@Copy GPFSEL1 into r1
-		mov		r8, #1					@Least sig bit
-		mov		r2, #7					@b0111		
-		lsl		r2, #3					@r2= 0 111 000
-		bic		r1, r2					@Clear pin 11 bits
-		lsl		r5, #3					@r5= 0 001 000
-		orr		r1, r5					@set pin11 func in r1
-		str		r1, [r0]				@write back to GPFSEL1
+		add		r0, r0, #4										@Original address incremented by 4
+		ldr		r1, [r0]										@Copy GPFSEL1 into r1
+		mov		r8, #1											@Least sig bit
+		mov		r2, #7											@b0111		
+		lsl		r2, #3											@r2= 0 111 000
+		bic		r1, r2											@Clear pin 11 bits
+		lsl		r5, #3											@r5= 0 001 000
+		orr		r1, r5											@set pin11 func in r1
+		str		r1, [r0]										@write back to GPFSEL1
 		b		ExitGPIO
 				
 LineTen:
