@@ -45,9 +45,6 @@ main:
 		b		request
 		
 reLoop:	b		request
-		//b		request
-		//bl		Read_SNES
-		//b		looop
 		
 looop:	
 		bl		Read_SNES
@@ -88,15 +85,15 @@ checkMsg:
 		push	{r6, lr}
 		mov		r6,	r0
 		
-		ldr		r1,	=#0b0111111111111111
+		ldr		r1,	=0x7FFF
 		teq		r6,	r1
 		beq		printB
 		
-		ldr		r1,	=#0b1011111111111111
+		ldr		r1,	=0XBFFF
 		teq		r6,	r1
 		beq		printY
 		
-		ldr		r1,	=0xDEFF
+		ldr		r1,	=0xDFFF
 		teq		r6,	r1
 		beq		printSelect
 		
@@ -201,7 +198,7 @@ InitGPIO:
 		//b		lineElvn
 
 sel0:
-		mov		r6,	#9
+		mov		r8,	#9
 		b		next
 		
 sel1:	
@@ -301,9 +298,6 @@ ExitInitGPIO:
 
 @Write a bit to the SNES latch line
 Write_Latch:
-		//push 	{fp, lr}
-		//mov		fp,	sp
-		
 		mov		r1,	r0
 		mov		r0,	#9
 		
@@ -315,7 +309,6 @@ Write_Latch:
 		streq	r3,	[r2, #40]									@ GPCLR0
 		strne	r3,	[r2, #28]									@ GPSET0
 		
-		//pop		{fp, pc}
 		mov		pc, lr
 
 @writes a bit to the SNES clock line
@@ -333,8 +326,7 @@ Write_Clock:
 		teq 	r1,	#0
 		streq	r3, [r2, #40]									@ GPCLR0
 		strne	r3,	[r2, #28]									@ GPSET0
-		
-		//pop		{fp, pc}
+	
 		mov		pc, lr
 
 @reads a bit from the SNES data line
@@ -365,7 +357,7 @@ Read_SNES:
 		@mov		fp,	sp
 		@sub		sp, #12
 
-		//mov		r6,	#0										@r6 is button
+		mov		r6,	#0										@r6 is button
 		mov		r0,	#1
 		bl		Write_Clock
 		mov		r0,	#1
@@ -375,7 +367,7 @@ Read_SNES:
 		mov		r0,	#0
 		bl		Write_Latch
 		mov		r5,	#0										@r5 = i
-		mov		r6,	#0x0000
+		//mov		r6,	#0x0000
 
 pulseLoop:	
 		mov		r0,	#6
@@ -407,8 +399,6 @@ pulseLoop:
 		blt		pulseLoop
 		
 		mov		r0,	r6
-		
-		//mov		r0,	#0xBFFF
 		
 		@add		sp, #12
 		pop		{r5, r6, pc}
@@ -520,13 +510,9 @@ butA:
 butX:
 .asciz	"You have pressed X\n"
 butLb:
-.asciz	"You have pressed LEFT\n"
+.asciz	"You have pressed LEFT trigger\n"
 butRb:
-.asciz	"You have pressed RIGHT\n"
-test1:
-.asciz	"Test 1 r0: %d\n"
-test2:
-.asciz	"here: %d\n"
+.asciz	"You have pressed RIGHT trigger\n"
 
 end:
 .asciz 	"Program is terminating...\n"
